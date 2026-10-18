@@ -1,0 +1,129 @@
+/* =========================================================
+   NexSafe — report.css
+   Styles only used on the Report an Issue page (report.html):
+   the form card, the Building/Level/Exact Location row, the
+   photo dropzone + AI verification result, and the
+   confirmation ("review your report") screen.
+   ========================================================= */
+
+.container--narrow { max-width: 680px; }
+
+.report__form {
+  background: var(--n-0);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-xl);
+  padding: var(--sp-7);
+  box-shadow: var(--sh-lg);
+}
+
+.field__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.field__row--three { grid-template-columns: 1fr 1fr 1fr; }
+.field__optional { font-weight: 400; color: var(--text-faint); }
+.field__required { font-weight: 600; color: var(--c-error); font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; }
+
+.report__actions { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+.report__hint { font-size: .85rem; color: var(--n-400); }
+
+/* ---------- Photo dropzone ---------- */
+.dropzone {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  background: var(--n-50);
+  transition: border-color .2s, background .2s;
+  cursor: pointer;
+}
+.dropzone:hover { border-color: var(--c-primary-500); }
+.dropzone__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: var(--sp-6) var(--sp-4);
+  cursor: pointer;
+  color: var(--text-soft);
+}
+.dropzone__empty svg { color: var(--n-400); }
+.dropzone__empty p { font-weight: 600; color: var(--n-700); font-size: .92rem; }
+.dropzone__empty span { font-size: .8rem; color: var(--text-faint); }
+.dropzone__preview { position: relative; padding: var(--sp-3); }
+.dropzone__preview img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+}
+.dropzone__remove {
+  margin-top: var(--sp-3);
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--c-error);
+  cursor: pointer;
+}
+.dropzone__remove:hover { text-decoration: underline; }
+
+.scan-result {
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: .88rem;
+}
+.scan-result--loading {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--n-50);
+  color: var(--text-soft);
+}
+.scan-result--warn { background: #fffbeb; border: 1px solid #fde68a; }
+.scan-result--match { background: #dcfce7; border: 1px solid #86efac; }
+.scan-result__title { font-weight: 700; color: #92400e; margin-bottom: 4px; }
+.scan-result--match .scan-result__title { color: #166534; }
+.scan-result__body { color: #78350f; line-height: 1.5; margin-bottom: var(--sp-3); }
+.scan-result--match .scan-result__body { color: #14532d; margin-bottom: 0; }
+.scan-result__actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+
+.photo-meta {
+  margin-top: var(--sp-3);
+  background: var(--n-50);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.photo-meta__title { font-size: .8rem; font-weight: 700; color: var(--n-600); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 8px; }
+.photo-meta__grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: .88rem; }
+.photo-meta__grid span:nth-child(odd) { color: var(--text-soft); }
+.photo-meta__grid span:nth-child(even) { color: var(--n-900); font-weight: 500; }
+
+/* ---------- Confirmation screen ---------- */
+.report__confirm {
+  background: var(--n-0);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-xl);
+  padding: var(--sp-7);
+  box-shadow: var(--sh-lg);
+}
+.confirm-card { display: flex; gap: var(--sp-5); margin-bottom: var(--sp-6); flex-wrap: wrap; }
+.confirm-card__photo { width: 160px; height: 160px; object-fit: cover; border-radius: var(--r-md); flex-shrink: 0; }
+.confirm-card__body { flex: 1; min-width: 200px; }
+.confirm-card__body h3 { font-size: 1.15rem; margin: 8px 0 4px; }
+.confirm-card__loc { color: var(--text-soft); font-size: .92rem; margin-bottom: 8px; }
+.confirm-card__desc { color: var(--n-700); line-height: 1.6; margin-bottom: var(--sp-3); }
+.confirm-card__meta { display: flex; flex-direction: column; gap: 4px; }
+.confirm-card__meta span { font-size: .82rem; color: var(--n-500); }
+
+/* ---------- Amazon Location map ---------- */
+#locationMap {
+  width: 100%;
+  height: 300px;
+  margin-top: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+/* ---------- Responsive ---------- */
+@media (max-width: 760px) {
+  .field__row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .report__form { padding: var(--sp-5); }
+}

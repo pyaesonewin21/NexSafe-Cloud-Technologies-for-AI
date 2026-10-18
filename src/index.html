@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- Favicon: the little icon in the browser tab. It's an inline SVG
+         (written directly as a data: URL) instead of a separate .ico
+         file, so there's one less file to manage. -->
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230f172a%22/><path d=%22M16 4C10 4 5 6 5 9c0 8 3 15 11 20V4z%22 fill=%22%2334d399%22/><path d=%22M16 4c6 0 11 2 11 5 0 8-3 15-11 20V4z%22 fill=%22%23059669%22/><path d=%22M16 7c-4 5-8 10-7 15 .5 5 4 8 7 8s6.5-3 7-8c1-5-3-10-7-15z%22 fill=%22%23fff%22/><path d=%22M16 10c-3 4-6 8-5 12 .5 4 3 6 5 6s4.5-2 5-6c.2-2.5-1-4-2.5-6 .3 2-.5 3.5-1.5 2.5-1-1 0-2.7 0-4 0-.8-.3-2.5-1-4.5z%22 fill=%22%232563eb%22/></svg>" />
+  <!-- Makes the page render nicely on phones instead of zoomed-out
+         like a desktop site squeezed onto a small screen. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Shown by search engines / when this link is shared. -->
+  <meta name="description"
+    content="NexSafe — Report and track campus safety, facility and maintenance issues at Temasek Polytechnic in real time." />
+  <title>NexSafe — Temasek Polytechnic Issue Reporting</title>
+  <!-- Loads our two Google Fonts. "preconnect" tells the browser to
+         start connecting to Google's font servers early, before it even
+         needs the fonts, which makes them load a bit faster. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap"
+    rel="stylesheet" />
+  <!-- base.css has styles shared by every page (buttons, header, modal,
+         etc). landing.css only has styles specific to this one page
+         (hero section, phone mockup, features grid...). -->
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/landing.css" />
+</head>
+
+<body>
+  <!-- The public marketing header — just the logo and a "Sign in"
+         button. This is different from the app header used on the
+         signed-in pages (home/feed/report/etc), which has a full nav
+         menu and a profile dropdown instead. -->
+  <header class="header header--landing">
+    <div class="container header__inner">
+      <a href="index.html" class="brand" aria-label="NexSafe home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+            <path d="M16 4C10 4 5 6 5 9c0 8 3 15 11 20V4z" fill="#34d399" />
+            <path d="M16 4c6 0 11 2 11 5 0 8-3 15-11 20V4z" fill="#059669" />
+            <path d="M16 7c-4 5-8 10-7 15 .5 5 4 8 7 8s6.5-3 7-8c1-5-3-10-7-15z" fill="#fff" />
+            <path
+              d="M16 10c-3 4-6 8-5 12 .5 4 3 6 5 6s4.5-2 5-6c.2-2.5-1-4-2.5-6 .3 2-.5 3.5-1.5 2.5-1-1 0-2.7 0-4 0-.8-.3-2.5-1-4.5z"
+              fill="#2563eb" />
+          </svg>
+        </span>
+        <span class="brand__name">Nex<span>Safe</span></span>
+      </a>
+      <div class="header__actions">
+        <a href="auth.html" class="btn btn--primary btn--sm">Sign in</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero: the big banner at the top with the headline and the
+         phone mockup graphic. It's just static decoration (fake data
+         to look nice) — the numbers/reports shown here aren't real. -->
+  <div class="hero" id="home">
+    <!-- Decorative background blobs and grid lines, purely visual,
+           hence aria-hidden="true" so screen readers skip them. -->
+    <div class="hero__bg" aria-hidden="true">
+      <div class="hero__glow hero__glow--1"></div>
+      <div class="hero__glow hero__glow--2"></div>
+      <div class="hero__grid"></div>
+    </div>
+    <div class="container hero__inner">
+      <div class="hero__content">
+        <span class="badge badge--soft"><span class="badge__pulse"></span> Temasek Polytechnic</span>
+        <h1 class="hero__title">
+          A safer campus, <span class="grad">reported together.</span>
+        </h1>
+        <p class="hero__lead">
+          NexSafe lets students and staff report safety hazards, facility issues and
+          maintenance problems in seconds — and track them to resolution in real time.
+        </p>
+        <div class="hero__cta">
+          <a class="btn btn--primary btn--lg" href="auth.html">
+            Get started
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </a>
+          <!-- Jumps down to the #features section below, on the same
+                 page — no JS needed, this is just a normal HTML anchor. -->
+          <a class="btn btn--ghost btn--lg" href="#features">
+            Learn more
+          </a>
+        </div>
+      </div>
+
+      <!-- Fake phone screenshot mockup, built entirely out of divs
+             and CSS (not a real image) so it can use our exact fonts
+             and colours. -->
+      <div class="hero__visual">
+        <div class="phone">
+          <div class="phone__notch"></div>
+          <div class="phone__screen">
+            <div class="phone__status">
+              <span>9:41</span>
+              <span class="phone__status-right"><i></i><i></i><i></i></span>
+            </div>
+            <div class="phone__app">
+              <div class="phone__appbar">
+                <div>
+                  <p class="phone__hello">Good morning</p>
+                  <p class="phone__name">Sarah</p>
+                </div>
+                <span class="phone__bell">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 8a6 6 0 1112 0c0 7 3 7 3 9H3c0-2 3-2 3-9zM10 21a2 2 0 004 0" stroke="currentColor"
+                      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <span class="phone__bell-dot"></span>
+                </span>
+              </div>
+              <div class="phone__search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+                  <path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span>Search issues near you…</span>
+              </div>
+              <div class="phone__chips">
+                <span class="chip chip--active">All</span>
+                <span class="chip">Safety</span>
+                <span class="chip">Maintenance</span>
+                <span class="chip">Other</span>
+              </div>
+              <div class="phone__reports">
+                <div class="prcard">
+                  <div class="prcard__top">
+                    <span class="tag tag--danger">Safety Hazards</span>
+                    <span class="prcard__time">2m ago</span>
+                  </div>
+                  <p class="prcard__title">Exposed wire on Library Stairs</p>
+                  <div class="prcard__meta">
+                    <span class="prcard__status prcard__status--review">Under Review</span>
+                    <span class="prcard__votes">Posted 2m ago</span>
+                  </div>
+                </div>
+                <div class="prcard">
+                  <div class="prcard__top">
+                    <span class="tag tag--warn">Maintenance Issues</span>
+                    <span class="prcard__time">18m ago</span>
+                  </div>
+                  <p class="prcard__title">Broken chair in Science Block 2</p>
+                  <div class="prcard__meta">
+                    <span class="prcard__status prcard__status--progress">In Progress</span>
+                    <span class="prcard__votes">Posted 18m ago</span>
+                  </div>
+                </div>
+                <div class="prcard">
+                  <div class="prcard__top">
+                    <span class="tag tag--warn">Maintenance Issues</span>
+                    <span class="prcard__time">1h ago</span>
+                  </div>
+                  <p class="prcard__title">Damaged ceiling — East Dorms</p>
+                  <div class="prcard__meta">
+                    <span class="prcard__status prcard__status--resolved">Resolved</span>
+                    <span class="prcard__votes">Posted 1h ago</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features: the 4-card grid explaining what the app does.
+         class="reveal" on each card means it fades in as you scroll to
+         it — that animation is handled by landing.js using an
+         IntersectionObserver. -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="badge">Why NexSafe</span>
+        <h2 class="section-title">Everything a campus needs to stay safe</h2>
+        <p class="section-sub">From the first report to the final fix, NexSafe keeps students, staff and facilities
+          teams in sync.</p>
+      </div>
+      <div class="features__grid">
+        <article class="feature reveal">
+          <span class="feature__icon feature__icon--blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3l8 3v6c0 5-3.5 8.3-8 9.5C7.5 20.3 4 17 4 12V6l8-3z" stroke="currentColor" stroke-width="2"
+                stroke-linejoin="round" />
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+          <h3>AI-powered verification</h3>
+          <p>Every photo is checked against your selected category with simulated AWS Rekognition before your report
+            goes to staff.</p>
+        </article>
+        <article class="feature reveal">
+          <span class="feature__icon feature__icon--green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M3 12l4-4 4 4 4-4 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <path d="M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </span>
+          <h3>Real-time tracking</h3>
+          <p>Follow every report from <em>submitted</em> to <em>resolved</em>. No more wondering if anyone saw it.</p>
+        </article>
+        <article class="feature reveal">
+          <span class="feature__icon feature__icon--violet">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z" stroke="currentColor" stroke-width="2" />
+              <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" />
+            </svg>
+          </span>
+          <h3>Smart Location Detection</h3>
+          <p>Uses available image metadata to assist with identifying when and where the issue was captured before
+            administrator review.</p>
+        </article>
+        <article class="feature reveal">
+          <span class="feature__icon feature__icon--rose">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9z" stroke="currentColor" stroke-width="2"
+                stroke-linejoin="round" />
+              <path d="M10 21a2 2 0 004 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </span>
+          <h3>Status notifications</h3>
+          <p>Get notified the moment your report is acknowledged, updated, or marked resolved.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works: 4 numbered steps with thin arrow "connector"
+         icons between them. In the CSS, .steps uses a 7-column grid
+         (4 steps + 3 connectors) so they line up in one row. -->
+  <section class="how" id="how">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="badge">How it works</span>
+        <h2 class="section-title">From report to resolution in four steps</h2>
+        <p class="section-sub">A clear, transparent flow that keeps everyone informed at every stage.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step__num">1</div>
+          <h3>Report it</h3>
+          <p>Snap a photo and describe the issue.</p>
+        </div>
+        <div class="step__connector" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg></div>
+        <div class="step reveal">
+          <div class="step__num">2</div>
+          <h3>We review it</h3>
+          <p>Staff review it and assign it to the right team.</p>
+        </div>
+        <div class="step__connector" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg></div>
+        <div class="step reveal">
+          <div class="step__num">3</div>
+          <h3>Track progress</h3>
+          <p>Follow live status updates as it's worked on.</p>
+        </div>
+        <div class="step__connector" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg></div>
+        <div class="step reveal">
+          <div class="step__num">4</div>
+          <h3>Get resolved</h3>
+          <p>You're notified the moment it's resolved.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final call-to-action banner before the footer. -->
+  <section class="cta">
+    <div class="container cta__inner reveal">
+      <h2>Ready to make Temasek Polytechnic safer?</h2>
+      <p>Join students and staff using NexSafe to turn reports into real resolutions.</p>
+      <div class="cta__actions">
+        <a class="btn btn--light btn--lg" href="auth.html">Get started</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Simple footer: logo, tagline, copyright (year filled in by JS),
+         and two placeholder links. -->
+  <footer class="footer footer--simple">
+    <div class="container footer__inner">
+      <a href="index.html" class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M16 4C10 4 5 6 5 9c0 8 3 15 11 20V4z" fill="#34d399" />
+            <path d="M16 4c6 0 11 2 11 5 0 8-3 15-11 20V4z" fill="#059669" />
+            <path d="M16 7c-4 5-8 10-7 15 .5 5 4 8 7 8s6.5-3 7-8c1-5-3-10-7-15z" fill="#fff" />
+            <path
+              d="M16 10c-3 4-6 8-5 12 .5 4 3 6 5 6s4.5-2 5-6c.2-2.5-1-4-2.5-6 .3 2-.5 3.5-1.5 2.5-1-1 0-2.7 0-4 0-.8-.3-2.5-1-4.5z"
+              fill="#2563eb" />
+          </svg>
+        </span>
+        <span class="brand__name">Nex<span>Safe</span></span>
+      </a>
+      <p class="footer__tagline">Smart Issue Reporting Platform</p>
+      <!-- The <span id="year"> starts empty — landing.js fills it in
+             with the current year automatically. -->
+      <p class="footer__meta">© <span id="year"></span> NexSafe · All rights reserved</p>
+      <div class="footer__links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast: the little pop-up message at the bottom of the screen
+         (e.g. "Signed out."). Starts invisible; common.js's showToast()
+         function fills in the text and slides it into view. Present on
+         every page, even though this particular page rarely triggers one. -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="toast__icon" id="toastIcon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+    </span>
+    <span class="toast__msg" id="toastMsg">Done!</span>
+  </div>
+
+  <!-- Back to top: hidden until you scroll down 600px, then fades in
+         (see common.js's scroll listener). -->
+  <button class="totop" id="toTop" aria-label="Back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" />
+    </svg>
+  </button>
+
+  <!-- Scripts load at the very bottom of the page (not in <head>) so
+         the HTML above is already visible before any JS has to run.
+         common.js MUST come first — landing.js depends on functions
+         and variables that common.js sets up. -->
+  <script src="js/common.js"></script>
+  <script src="js/landing.js"></script>
+</body>
+
+</html>

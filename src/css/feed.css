@@ -1,0 +1,45 @@
+/* =========================================================
+   NexSafe — feed.css
+   Styles only used on the Live Feed page (feed.html): the
+   category filter pill bar and the "X reports · Live" row.
+   ========================================================= */
+
+.feed__controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+  flex-wrap: wrap;
+}
+.filters { display: flex; gap: var(--sp-2); flex-wrap: wrap; background: var(--n-0); padding: 6px; border-radius: var(--r-pill); border: 1px solid var(--border-soft); box-shadow: var(--sh-sm); }
+.filter {
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  transition: all .2s;
+}
+.filter:hover { color: var(--n-900); background: var(--n-100); }
+.filter.is-active { background: var(--c-primary); color: #fff; box-shadow: 0 4px 10px -2px rgba(15, 118, 110, .45); }
+
+.feed__count { display: flex; align-items: center; gap: var(--sp-3); font-size: .88rem; color: var(--text-soft); }
+.feed__live { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--c-error); }
+.feed__live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--c-error);
+  animation: pulse-red 1.6s infinite;
+}
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, .5); }
+  70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .feed__controls { flex-direction: column; align-items: stretch; }
+  .filters { overflow-x: auto; flex-wrap: nowrap; }
+  .filter { white-space: nowrap; }
+}

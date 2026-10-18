@@ -1,0 +1,1078 @@
+import mysql from "mysql2/promise";
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
+
+
+// ======================================================
+// AMAZON SNS
+// ======================================================
+
+const snsClient = new SNSClient({
+  region: process.env.AWS_REGION || "ap-southeast-2"
+});
+
+const STAFF_TOPIC_ARN =
+  process.env.SNS_STAFF_TOPIC_ARN || "";
+
+const STUDENT_TOPIC_ARN =
+  process.env.SNS_STUDENT_TOPIC_ARN || "";
+
+// ======================================================
+// REPORT IMAGE REFERENCE
+// ======================================================
+// The actual image is uploaded by nexsafe-analyze-image.
+// This Lambda stores only the S3 URL/path in RDS.
+
+function normalizeReportImageReference(value) {
+  if (value == null || value === "") {
+    return null;
+  }
+
+  const imageValue =
+    String(value).trim();
+
+  if (/^data:image\//i.test(imageValue)) {
+    throw new Error(
+      "Report image must be an S3 URL/path, not Base64 image data."
+    );
+  }
+
+  return imageValue;
+}
+
+
+function friendlyStatus(status) {
+  const labels = {
+    submitted: "Submitted",
+    in_review: "Approved / Under Review",
+    in_progress: "In Progress",
+    resolved: "Resolved",
+    rejected: "Rejected"
+  };
+
+  return labels[status] || status || "Updated";
+}
+
+async function publishSns(topicArn, subject, message) {
+  if (!topicArn) {
+    console.warn(
+      "SNS notification skipped because the topic ARN environment variable is missing."
+    );
+    return false;
+  }
+
+  try {
+    const result = await snsClient.send(
+      new PublishCommand({
+        TopicArn: topicArn,
+        Subject: subject,
+        Message: message
+      })
+    );
+
+    console.log("SNS notification sent:", result.MessageId);
+    return true;
+  } catch (error) {
+    console.error("SNS PUBLISH ERROR:", error);
+    return false;
+  }
+}
+
+async function notifyStaffOfNewReport(report) {
+  if (!report) return false;
+
+  const message = [
+    "A new NexSafe campus issue report has been submitted.",
+    "",
+    `Report ID: ${report.id}`,
+    `Title: ${report.title}`,
+    `Issue type: ${report.issueType}`,
+    `Category: ${report.category}`,
+    `Location: ${report.location}`,
+    `Submitted by: ${report.authorName} (${report.authorId})`,
+    `Status: ${friendlyStatus(report.status)}`,
+    "",
+    "Please sign in to NexSafe to review the report."
+  ].join("\n");
+
+  return publishSns(
+    STAFF_TOPIC_ARN,
+    `NexSafe: New report #${report.id}`,
+    message
+  );
+}
+
+async function notifyStudentOfReportUpdate(beforeReport, afterReport, body) {
+  if (!afterReport) return false;
+
+  const statusChanged =
+    beforeReport &&
+    beforeReport.status !== afterReport.status;
+
+  const staffUpdateWasProvided =
+    Object.prototype.hasOwnProperty.call(body, "staffUpdate") ||
+    Object.prototype.hasOwnProperty.call(body, "staff_update");
+
+  const staffUpdateChanged =
+    staffUpdateWasProvided &&
+    (!beforeReport ||
+      beforeReport.staffUpdate !== afterReport.staffUpdate);
+
+  if (!statusChanged && !staffUpdateChanged) {
+    return false;
+  }
+
+  const lines = [
+    `Your NexSafe report #${afterReport.id} has been updated.`,
+    "",
+    `Title: ${afterReport.title}`
+  ];
+
+  if (statusChanged) {
+    lines.push(`Status: ${friendlyStatus(afterReport.status)}`);
+  }
+
+  if (staffUpdateChanged && afterReport.staffUpdate) {
+    lines.push(`Staff update: ${afterReport.staffUpdate}`);
+  }
+
+  lines.push(
+    "",
+    "Sign in to NexSafe to view the latest report details."
+  );
+
+  let subject =
+    `NexSafe: Report #${afterReport.id} updated`;
+
+  if (statusChanged) {
+    if (afterReport.status === "in_review") {
+      subject =
+        `NexSafe: Report #${afterReport.id} approved`;
+    } else if (afterReport.status === "resolved") {
+      subject =
+        `NexSafe: Report #${afterReport.id} resolved`;
+    } else if (afterReport.status === "rejected") {
+      subject =
+        `NexSafe: Report #${afterReport.id} rejected`;
+    }
+  }
+
+  return publishSns(
+    STUDENT_TOPIC_ARN,
+    subject,
+    lines.join("\n")
+  );
+}
+
+
+// ======================================================
+// COGNITO JWT CLAIM HELPERS
+// ======================================================
+
+function getJwtClaims(event) {
+  return (
+    event?.requestContext?.authorizer?.jwt?.claims ||
+    {}
+  );
+}
+
+function parseCognitoGroups(rawGroups) {
+  if (Array.isArray(rawGroups)) {
+    return rawGroups;
+  }
+
+  if (!rawGroups) {
+    return [];
+  }
+
+  if (typeof rawGroups === "string") {
+    const trimmed = rawGroups.trim();
+
+    if (
+      trimmed.startsWith("[") &&
+      trimmed.endsWith("]")
+    ) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed)
+          ? parsed
+          : [];
+      } catch {
+        // Fall through to comma splitting.
+      }
+    }
+
+    return trimmed
+      .replace(/^\[|\]$/g, "")
+      .split(",")
+      .map(function (value) {
+        return value
+          .replace(/^["'\s]+|["'\s]+$/g, "")
+          .trim();
+      })
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function getAuthenticatedUser(event) {
+  const claims = getJwtClaims(event);
+
+  const groups = parseCognitoGroups(
+    claims["cognito:groups"]
+  );
+
+  const email =
+    claims.email ||
+    null;
+
+  const name =
+    claims.name ||
+    email ||
+    "NexSafe User";
+
+  return {
+    email,
+    name,
+    sub: claims.sub || null,
+    groups,
+    isStaff: groups.includes("staff"),
+    isStudent: groups.includes("students")
+  };
+}
+
+function forbidden(message) {
+  return response(403, {
+    success: false,
+    message:
+      message ||
+      "You do not have permission to perform this action."
+  });
+}
+
+function unauthorized(message) {
+  return response(401, {
+    success: false,
+    message:
+      message ||
+      "Authentication is required."
+  });
+}
+
+const corsHeaders = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*"
+};
+
+function response(statusCode, body) {
+  return {
+    statusCode,
+    headers: corsHeaders,
+    body: JSON.stringify(body)
+  };
+}
+
+function parseBody(event) {
+  if (event.body == null) return {};
+
+  if (typeof event.body === "object") {
+    return event.body;
+  }
+
+  if (
+    typeof event.body === "string" &&
+    event.body.trim() !== ""
+  ) {
+    return JSON.parse(event.body);
+  }
+
+  return {};
+}
+
+function asJson(value) {
+  if (value == null || value === "") {
+    return null;
+  }
+
+  return typeof value === "string"
+    ? value
+    : JSON.stringify(value);
+}
+
+function mapReport(row) {
+  if (!row) return null;
+
+  let rekognition = row.rekognition;
+
+  if (typeof rekognition === "string") {
+    try {
+      rekognition = JSON.parse(rekognition);
+    } catch {
+      // Keep original value if parsing fails.
+    }
+  }
+
+  return {
+    id: Number(row.id),
+
+    title: row.title,
+    issueType: row.issue_type,
+    category: row.category,
+
+    building: row.building,
+    level: row.level,
+    exactLocation: row.exact_location,
+    location: row.location,
+
+    description: row.description,
+
+    status: row.status,
+    priority: row.priority,
+
+    authorId: row.author_id,
+    authorName: row.author_name,
+
+    image: row.image,
+    rekognition: rekognition,
+
+    staffUpdate: row.staff_update,
+
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function ensureReportsTable(connection) {
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS reports (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+      title VARCHAR(255) NOT NULL,
+      issue_type VARCHAR(100) NOT NULL,
+      category VARCHAR(100) NOT NULL,
+
+      building VARCHAR(150) NOT NULL,
+      level VARCHAR(100) NOT NULL,
+      exact_location VARCHAR(255) NOT NULL,
+      location VARCHAR(500) NOT NULL,
+
+      description TEXT NOT NULL,
+
+      status VARCHAR(50)
+        NOT NULL DEFAULT 'submitted',
+
+      priority VARCHAR(50)
+        DEFAULT NULL,
+
+      author_id VARCHAR(255) NOT NULL,
+      author_name VARCHAR(255) NOT NULL,
+
+      image LONGTEXT DEFAULT NULL,
+
+      rekognition JSON DEFAULT NULL,
+
+      staff_update TEXT DEFAULT NULL,
+
+      created_at TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+      updated_at TIMESTAMP
+        NULL DEFAULT NULL
+        ON UPDATE CURRENT_TIMESTAMP,
+
+      PRIMARY KEY (id),
+
+      INDEX idx_author_id (author_id),
+      INDEX idx_status (status),
+      INDEX idx_created_at (created_at)
+    )
+  `);
+}
+
+async function getReportById(connection, id) {
+  const [rows] = await connection.execute(
+    "SELECT * FROM reports WHERE id = ?",
+    [id]
+  );
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return mapReport(rows[0]);
+}
+
+
+// ======================================================
+// CREATE
+// ======================================================
+
+async function createReport(connection, body) {
+  const issueType =
+    body.issueType ?? body.issue_type;
+
+  const exactLocation =
+    body.exactLocation ?? body.exact_location;
+
+  const authorId =
+    body.authorId ?? body.author_id;
+
+  const authorName =
+    body.authorName ?? body.author_name;
+
+  const staffUpdate =
+    body.staffUpdate ??
+    body.staff_update ??
+    null;
+
+  const required = {
+    title: body.title,
+    issueType: issueType,
+    category: body.category,
+    building: body.building,
+    level: body.level,
+    exactLocation: exactLocation,
+    location: body.location,
+    description: body.description,
+    authorId: authorId,
+    authorName: authorName
+  };
+
+  const missing = Object.entries(required)
+    .filter(function ([key, value]) {
+      return (
+        value == null ||
+        String(value).trim() === ""
+      );
+    })
+    .map(function ([key]) {
+      return key;
+    });
+
+  if (missing.length > 0) {
+    return response(400, {
+      success: false,
+      message:
+        "Missing required fields: " +
+        missing.join(", ")
+    });
+  }
+
+  const imageReference =
+    normalizeReportImageReference(
+      body.image
+    );
+
+  const [result] = await connection.execute(
+    `
+      INSERT INTO reports
+      (
+        title,
+        issue_type,
+        category,
+        building,
+        level,
+        exact_location,
+        location,
+        description,
+        status,
+        priority,
+        author_id,
+        author_name,
+        image,
+        rekognition,
+        staff_update
+      )
+
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      body.title,
+      issueType,
+      body.category,
+
+      body.building,
+      String(body.level),
+      exactLocation,
+      body.location,
+
+      body.description,
+
+      body.status || "submitted",
+      body.priority || null,
+
+      authorId,
+      authorName,
+
+      imageReference,
+
+      asJson(body.rekognition),
+
+      staffUpdate
+    ]
+  );
+
+  const report =
+    await getReportById(
+      connection,
+      result.insertId
+    );
+
+  await notifyStaffOfNewReport(report);
+
+  return response(201, {
+    success: true,
+    report: report
+  });
+}
+
+
+// ======================================================
+// READ ALL / MY REPORTS
+// ======================================================
+
+async function listReports(connection, event) {
+  const query =
+    event.queryStringParameters || {};
+
+  const authorId =
+    query.authorId ||
+    query.email ||
+    null;
+
+  let sql =
+    "SELECT * FROM reports";
+
+  const params = [];
+
+  if (authorId) {
+    sql += " WHERE author_id = ?";
+    params.push(authorId);
+  }
+
+  sql += " ORDER BY created_at DESC";
+
+  const [rows] =
+    await connection.execute(
+      sql,
+      params
+    );
+
+  return response(200, {
+    success: true,
+    reports: rows.map(mapReport)
+  });
+}
+
+
+// ======================================================
+// READ ONE
+// ======================================================
+
+async function readReport(connection, id) {
+  if (!id) {
+    return response(400, {
+      success: false,
+      message: "Report id is required."
+    });
+  }
+
+  const report =
+    await getReportById(connection, id);
+
+  if (!report) {
+    return response(404, {
+      success: false,
+      message: "Report not found."
+    });
+  }
+
+  return response(200, {
+    success: true,
+    report: report
+  });
+}
+
+
+// ======================================================
+// UPDATE
+// ======================================================
+
+async function updateReport(
+  connection,
+  id,
+  body
+) {
+  if (!id) {
+    return response(400, {
+      success: false,
+      message: "Report id is required."
+    });
+  }
+
+  const beforeReport =
+    await getReportById(
+      connection,
+      id
+    );
+
+  if (!beforeReport) {
+    return response(404, {
+      success: false,
+      message: "Report not found."
+    });
+  }
+
+  const updateBody = { ...body };
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      updateBody,
+      "image"
+    )
+  ) {
+    updateBody.image =
+      normalizeReportImageReference(
+        updateBody.image
+      );
+  }
+
+  const fieldMap = {
+    title: "title",
+
+    issueType: "issue_type",
+    issue_type: "issue_type",
+
+    category: "category",
+
+    building: "building",
+    level: "level",
+
+    exactLocation: "exact_location",
+    exact_location: "exact_location",
+
+    location: "location",
+
+    description: "description",
+
+    status: "status",
+    priority: "priority",
+
+    authorId: "author_id",
+    author_id: "author_id",
+
+    authorName: "author_name",
+    author_name: "author_name",
+
+    image: "image",
+
+    rekognition: "rekognition",
+
+    staffUpdate: "staff_update",
+    staff_update: "staff_update"
+  };
+
+  const assignments = [];
+  const values = [];
+
+  const usedColumns = new Set();
+
+  for (
+    const [key, column]
+    of Object.entries(fieldMap)
+  ) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        updateBody,
+        key
+      ) &&
+      !usedColumns.has(column)
+    ) {
+      assignments.push(
+        "`" + column + "` = ?"
+      );
+
+      if (column === "rekognition") {
+        values.push(
+          asJson(updateBody[key])
+        );
+      } else {
+        values.push(updateBody[key]);
+      }
+
+      usedColumns.add(column);
+    }
+  }
+
+  if (assignments.length === 0) {
+    return response(400, {
+      success: false,
+      message:
+        "No valid fields were provided for update."
+    });
+  }
+
+  values.push(id);
+
+  const [result] =
+    await connection.execute(
+      `
+        UPDATE reports
+        SET ${assignments.join(", ")}
+        WHERE id = ?
+      `,
+      values
+    );
+
+  if (result.affectedRows === 0) {
+    return response(404, {
+      success: false,
+      message: "Report not found."
+    });
+  }
+
+  const report =
+    await getReportById(
+      connection,
+      id
+    );
+
+  await notifyStudentOfReportUpdate(
+    beforeReport,
+    report,
+    body
+  );
+
+  return response(200, {
+    success: true,
+    report: report
+  });
+}
+
+
+// ======================================================
+// DELETE
+// ======================================================
+
+async function deleteReport(
+  connection,
+  id
+) {
+  if (!id) {
+    return response(400, {
+      success: false,
+      message: "Report id is required."
+    });
+  }
+
+  const [result] =
+    await connection.execute(
+      "DELETE FROM reports WHERE id = ?",
+      [id]
+    );
+
+  if (result.affectedRows === 0) {
+    return response(404, {
+      success: false,
+      message: "Report not found."
+    });
+  }
+
+  return response(200, {
+    success: true,
+    message:
+      "Report deleted successfully."
+  });
+}
+
+
+// ======================================================
+// MAIN LAMBDA HANDLER
+// ======================================================
+
+export const handler = async (event = {}) => {
+  let connection;
+
+  try {
+    console.log(
+      "NexSafe Reports API event:",
+      JSON.stringify(event)
+    );
+
+    const dbHost =
+      process.env.DB_HOST;
+
+    const dbPort =
+      Number(
+        process.env.DB_PORT || 3306
+      );
+
+    const dbName =
+      process.env.DB_NAME ||
+      "nexsafe";
+
+    const dbUser =
+      process.env.DB_USER;
+
+    const dbPassword =
+      process.env.DB_PASSWORD;
+
+    if (
+      !dbHost ||
+      !dbUser ||
+      !dbPassword
+    ) {
+      throw new Error(
+        "Missing database environment variables."
+      );
+    }
+
+    connection =
+      await mysql.createConnection({
+        host: dbHost,
+        port: dbPort,
+        user: dbUser,
+        password: dbPassword,
+        database: dbName,
+        connectTimeout: 10000
+      });
+
+    await ensureReportsTable(
+      connection
+    );
+
+    const routeKey =
+      event.routeKey ||
+      event.requestContext?.routeKey ||
+      "";
+
+    const body =
+      parseBody(event);
+
+    const id =
+      event.pathParameters?.id ||
+      event.id ||
+      body.id;
+
+
+    // ==================================================
+    // DIRECT LAMBDA TEST EVENTS
+    // Used before connecting API Gateway.
+    // ==================================================
+
+    if (!routeKey) {
+
+      switch (event.action) {
+
+        case "create":
+          return await createReport(
+            connection,
+            body
+          );
+
+        case "list":
+          return await listReports(
+            connection,
+            event
+          );
+
+        case "get":
+          return await readReport(
+            connection,
+            id
+          );
+
+        case "update":
+          return await updateReport(
+            connection,
+            id,
+            body
+          );
+
+        case "delete":
+          return await deleteReport(
+            connection,
+            id
+          );
+
+        default: {
+          const [rows] =
+            await connection.query(
+              `
+                SELECT
+                  COUNT(*) AS reportCount
+                FROM reports
+              `
+            );
+
+          return response(200, {
+            success: true,
+            message:
+              "NexSafe RDS connection is working.",
+            database: dbName,
+            table: "reports",
+            reportCount:
+              Number(
+                rows[0].reportCount
+              )
+          });
+        }
+      }
+    }
+
+
+    // ==================================================
+    // API GATEWAY HTTP API ROUTES
+    // Requests reaching these routes should already have
+    // passed API Gateway's Cognito JWT authorizer.
+    // ==================================================
+
+    const authUser =
+      getAuthenticatedUser(event);
+
+    if (!authUser.email) {
+      return unauthorized(
+        "A valid Cognito user email was not found in the JWT."
+      );
+    }
+
+    switch (routeKey) {
+
+      case "POST /reports": {
+        // Never trust author fields supplied by the browser.
+        // Bind the report to the authenticated Cognito user.
+        const securedBody = {
+          ...body,
+          authorId: authUser.email,
+          author_id: authUser.email,
+          authorName: authUser.name,
+          author_name: authUser.name
+        };
+
+        return await createReport(
+          connection,
+          securedBody
+        );
+      }
+
+
+      case "GET /reports":
+        return await listReports(
+          connection,
+          event
+        );
+
+
+      case "GET /reports/mine": {
+        // Ignore any email supplied by the browser and use
+        // the authenticated Cognito identity instead.
+        const securedEvent = {
+          ...event,
+          queryStringParameters: {
+            ...(event.queryStringParameters || {}),
+            authorId: authUser.email,
+            email: authUser.email
+          }
+        };
+
+        return await listReports(
+          connection,
+          securedEvent
+        );
+      }
+
+
+      case "GET /reports/{id}":
+        return await readReport(
+          connection,
+          id
+        );
+
+
+      case "PUT /reports/{id}":
+        if (!authUser.isStaff) {
+          return forbidden(
+            "Only NexSafe staff can update reports."
+          );
+        }
+
+        return await updateReport(
+          connection,
+          id,
+          body
+        );
+
+
+      case "DELETE /reports/{id}":
+        if (!authUser.isStaff) {
+          return forbidden(
+            "Only NexSafe staff can delete reports."
+          );
+        }
+
+        return await deleteReport(
+          connection,
+          id
+        );
+
+
+      default:
+        return response(404, {
+          success: false,
+          message:
+            "Route not found: " +
+            routeKey
+        });
+    }
+
+  } catch (error) {
+
+    console.error(
+      "NEXSAFE REPORTS API ERROR:",
+      error
+    );
+
+    if (error instanceof SyntaxError) {
+      return response(400, {
+        success: false,
+        message:
+          "Invalid JSON request body."
+      });
+    }
+
+    return response(500, {
+      success: false,
+      message: error.message
+    });
+
+  } finally {
+
+    if (connection) {
+      await connection.end();
+    }
+  }
+};
+
+
+
+========================================
+package.json
+========================================
+
+
+{
+  "name": "nexsafe-reports-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "mysql2": "^3.23.3"
+  }
+}

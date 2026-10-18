@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230f172a%22/><path d=%22M16 4C10 4 5 6 5 9c0 8 3 15 11 20V4z%22 fill=%22%2334d399%22/><path d=%22M16 4c6 0 11 2 11 5 0 8-3 15-11 20V4z%22 fill=%22%23059669%22/><path d=%22M16 7c-4 5-8 10-7 15 .5 5 4 8 7 8s6.5-3 7-8c1-5-3-10-7-15z%22 fill=%22%23fff%22/><path d=%22M16 10c-3 4-6 8-5 12 .5 4 3 6 5 6s4.5-2 5-6c.2-2.5-1-4-2.5-6 .3 2-.5 3.5-1.5 2.5-1-1 0-2.7 0-4 0-.8-.3-2.5-1-4.5z%22 fill=%22%232563eb%22/></svg>" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report an Issue — NexSafe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/report.css" />
+  <!-- Amazon Location map -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.x/dist/maplibre-gl.css" />
+
+  <script src="https://unpkg.com/maplibre-gl@5.x/dist/maplibre-gl.js"></script>
+</head>
+
+<body>
+  <!-- Same signed-in header as every other app page (see home.html). -->
+  <header class="header" id="appHeader">
+    <div class="container header__inner">
+      <a href="home.html" class="brand" aria-label="NexSafe">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+            <path d="M16 4C10 4 5 6 5 9c0 8 3 15 11 20V4z" fill="#34d399" />
+            <path d="M16 4c6 0 11 2 11 5 0 8-3 15-11 20V4z" fill="#059669" />
+            <path d="M16 7c-4 5-8 10-7 15 .5 5 4 8 7 8s6.5-3 7-8c1-5-3-10-7-15z" fill="#fff" />
+            <path
+              d="M16 10c-3 4-6 8-5 12 .5 4 3 6 5 6s4.5-2 5-6c.2-2.5-1-4-2.5-6 .3 2-.5 3.5-1.5 2.5-1-1 0-2.7 0-4 0-.8-.3-2.5-1-4.5z"
+              fill="#2563eb" />
+          </svg>
+        </span>
+        <span class="brand__name">Nex<span>Safe</span></span>
+      </a>
+
+      <nav class="appnav" id="appNav">
+        <a href="home.html" class="appnav__link">Home</a>
+        <a href="feed.html" class="appnav__link">Feed</a>
+        <a href="report.html" class="appnav__link is-active" data-role="student">Report</a>
+        <a href="myreports.html" class="appnav__link" data-role="student">My Reports</a>
+        <a href="review.html" class="appnav__link" data-role="staff">Review Queue</a>
+        <a href="manage.html" class="appnav__link" data-role="staff">Manage Reports</a>
+      </nav>
+
+      <div class="header__actions">
+        <div class="userchip-wrap">
+          <button class="userchip" id="userChip" aria-haspopup="true" aria-expanded="false">
+            <span class="userchip__avatar" id="userAvatar"></span>
+            <span class="userchip__info">
+              <span class="userchip__name" id="userName"></span>
+              <span class="userchip__role" id="userRole"></span>
+            </span>
+            <svg class="userchip__caret" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div class="profile-menu" id="profileMenu" hidden>
+            <div class="profile-menu__header">
+              <span class="profile-menu__avatar" id="profileAvatar"></span>
+              <div>
+                <p class="profile-menu__name" id="profileName"></p>
+                <p class="profile-menu__email" id="profileEmail"></p>
+              </div>
+            </div>
+            <div class="profile-menu__row">
+              <span>Role</span>
+              <span class="profile-menu__role-badge" id="profileRole"></span>
+            </div>
+            <button class="profile-menu__signout" id="signOutBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Sign out
+            </button>
+          </div>
+        </div>
+        <button class="nav-toggle" id="appNavToggle" aria-label="Toggle menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="appmain">
+    <div class="container container--narrow">
+      <div class="view__head" id="reportHeadForm">
+        <div>
+          <h1 class="view__title">Report an Issue</h1>
+          <p class="view__sub">Tell us what's happening on campus.</p>
+        </div>
+      </div>
+
+      <!-- STEP 1: the actual report form. novalidate turns off the
+           browser's own built-in popup validation, because we show our
+           own custom red-border + error-message validation instead
+           (see validateReportForm() in the script at the bottom). -->
+      <form class="report__form" id="reportForm" novalidate>
+        <div class="field">
+          <label for="r-title">Issue title</label>
+          <input id="r-title" name="title" type="text" placeholder="e.g. Broken chair in Science Block 2" required />
+          <span class="field__error" data-for="r-title">Please add a short title.</span>
+        </div>
+
+        <!-- Specific issue type, grouped by broad category using
+             <optgroup> (just adds a grey non-clickable heading above
+             each group of options in the dropdown). The broad category
+             itself is never chosen directly — see #issueTypeCategory
+             below. -->
+        <div class="field">
+          <label for="r-issue-type">Issue type</label>
+          <div class="select">
+            <select id="r-issue-type" name="issue_type" required>
+              <option value="">Select an issue type</option>
+              <optgroup label="Safety Hazards">
+                <option value="Electrical Issue">Electrical Issue</option>
+                <option value="Staircase Issue">Staircase Issue</option>
+                <option value="Water Issue">Water Issue</option>
+              </optgroup>
+              <optgroup label="Maintenance Issues">
+                <option value="Broken Chair">Broken Chair</option>
+                <option value="Broken Table or Desk">Broken Table or Desk</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="Other">Other / Not listed</option>
+              </optgroup>
+            </select>
+          </div>
+          <!-- Filled in by JS with the category that gets auto-assigned
+               from the chosen issue type, e.g. "Category: Maintenance Issues" -->
+          <p class="report__hint" id="issueTypeCategory"></p>
+          <span class="field__error" data-for="r-issue-type">Pick an issue type.</span>
+        </div>
+
+        <!-- Three text fields side by side (see .field__row--three in
+             report.css — a 3-column grid). -->
+        <div class="field__row field__row--three">
+          <div class="field">
+            <label for="r-building">Building</label>
+            <input id="r-building" name="building" type="text" placeholder="e.g. Science Block 2" required />
+            <span class="field__error" data-for="r-building">Which building?</span>
+          </div>
+          <div class="field">
+            <label for="r-level">Level</label>
+            <input id="r-level" name="level" type="text" placeholder="e.g. Level 2" required />
+            <span class="field__error" data-for="r-level">Which level?</span>
+          </div>
+          <div class="field">
+            <label for="r-exact">Exact Location</label>
+            <input id="r-exact" name="exact_location" type="text" placeholder="e.g. Room 114, near the sink" required />
+            <span class="field__error" data-for="r-exact">Be specific about where.</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Pin issue location on map <span class="field__optional">(optional)</span></label>
+
+          <p class="report__hint">
+            Click the map to mark approximately where the issue is located.
+          </p>
+
+          <div id="locationMap"></div>
+
+          <p class="report__hint" id="mapLocationText">
+            No map location selected.
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="r-desc">Description</label>
+          <textarea id="r-desc" name="description" rows="5"
+            placeholder="Describe what you saw, when, and any risk it poses…" required></textarea>
+          <span class="field__error" data-for="r-desc">Add a short description.</span>
+        </div>
+
+
+        <div class="field">
+          <label>Photo <span class="field__required">(required)</span></label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="r-photo" accept="image/*" hidden onchange="previewPhoto()" />
+            <div class="dropzone__empty" id="dropzoneEmpty" onclick="document.getElementById('r-photo').click()">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16M14 14l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 4h16v16H4V4z"
+                  stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <p>Click to upload a photo</p>
+              <span>Required — we'll verify it matches your selected issue type</span>
+            </div>
+            <div class="dropzone__preview" id="dropzonePreview" hidden>
+              <img id="dropzonePreviewImg" alt="Selected photo preview" />
+              <button type="button" class="dropzone__remove" id="dropzoneRemove" onclick="removePhoto()">Remove
+                photo</button>
+            </div>
+          </div>
+          <span class="field__error" data-for="r-photo" id="photoRequiredError">A photo is required.</span>
+          <div class="photo-meta" id="photoMeta" hidden></div>
+          <!-- Simulated Rekognition result shows up here once a photo +
+               issue type are both picked. -->
+          <div class="scan-result" id="scanResult" hidden></div>
+        </div>
+
+        <div class="report__actions">
+          <button type="button" class="btn btn--primary btn--lg" id="reportContinueBtn" onclick="showConfirmScreen()">
+            Submit
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+          <span class="report__hint" id="reportHint">Upload a photo to continue.</span>
+        </div>
+      </form>
+
+      <!-- STEP 2: review screen. Starts hidden — showConfirmScreen()
+           in the script below hides the form above and shows this
+           instead, once everything has been filled in correctly. -->
+      <div class="report__confirm" id="reportConfirm" hidden>
+        <div class="view__head">
+          <div>
+            <h1 class="view__title">Review your report</h1>
+            <p class="view__sub">Check everything looks right before submitting.</p>
+          </div>
+        </div>
+
+        <div class="confirm-card">
+          <img class="confirm-card__photo" id="confirmPhoto" alt="Report photo" />
+          <div class="confirm-card__body">
+            <span class="tag" id="confirmCategory"></span>
+            <h3 id="confirmTitle"></h3>
+            <p class="confirm-card__loc" id="confirmLocation"></p>
+            <p class="confirm-card__desc" id="confirmDescription"></p>
+            <div class="confirm-card__meta" id="confirmMeta"></div>
+          </div>
+        </div>
+
+        <div class="report__actions">
+          <button type="button" class="btn btn--ghost btn--lg" id="editReportBtn" onclick="editReportDetails()">Edit
+            details</button>
+          <button type="button" class="btn btn--primary btn--lg" id="confirmSubmitBtn" onclick="submitReport()">
+            <span id="confirmSubmitLabel">Confirm &amp; submit</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="toast__icon" id="toastIcon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+    </span>
+    <span class="toast__msg" id="toastMsg">Done!</span>
+  </div>
+
+  <!-- Back to top -->
+  <button class="totop" id="toTop" aria-label="Back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" />
+    </svg>
+  </button>
+
+  <!-- This page only loads common.js (for the header/toast/localStorage
+       helpers) — it does NOT load js/report.js. All the form logic
+       below is written directly in this page instead, in a plain
+       <script> tag. -->
+  <script src="js/common.js"></script>
+
+  <script>
+
+    // requireRole("student") sends anyone who isn't a signed-in student
+    // (staff accounts, or nobody signed in at all) away to a different
+    // page — it's what stops a staff account from ending up here.
+    requireRole("student");
+
+    // setupAppUI() is what fills in the header: your name/avatar/role
+    // in the top-right chip, AND hides the staff-only nav links (Review
+    // Queue, Manage Reports) for a student account. Without calling this,
+    // the header just shows its empty starting HTML and every nav link,
+    // which is exactly the bug we're fixing here.
+    setupAppUI();
+    // ---------------------------------------------------------
+    // Amazon Location Service
+    // Lets the student click the map to pin the issue location.
+    // ---------------------------------------------------------
+
+    var selectedLatitude = null;
+    var selectedLongitude = null;
+    var locationMarker = null;
+
+    var AMAZON_LOCATION_API_KEY =
+      "v1.public.eyJqdGkiOiJkNDg5NzllMy00MDA1LTRmYzYtYTdhNi04OWQyNDYzMzkzMTAifXCgOK2ppHfRSu2cTKNP6ByACEzxhfbWvvgTv6v-LkbzfSTq8Z2klHxIPqi5C8eBNN3zFSqdp1q-RIBq1OiDOA1PA9ZXA38KiAVopVHCZ_qilBGmcKGtdXNfvtQE1-K36kdaqHshUzeq-5L-RqYFGQPrZ5b5PRgIqQMRJVOkQBjFrTLpBIXSr7Naxis3bHTRKhNUZM7GO_n_mB4lZGeb_hO3RNyD3vfuP5rBJW4KtE6TXpnHH04H8cI5lPSI7JEwYfolTiwV7xQgHj13tsEnqyFRUXwPS-vnhBxMQGkInNStbWfvE_TL61ACAGLurYsHU6bDHGS2cN4AGDN5JbefOMY.ZTA2OTdiZTItNzgyYy00YWI5LWFmODQtZjdkYmJkODNkMmFh";
+
+    var AMAZON_LOCATION_REGION = "ap-southeast-2";
+
+    var mapStyleUrl =
+      "https://maps.geo." +
+      AMAZON_LOCATION_REGION +
+      ".amazonaws.com/v2/styles/Standard/descriptor?key=" +
+      AMAZON_LOCATION_API_KEY;
+
+    var locationMap = new maplibregl.Map({
+      container: "locationMap",
+      style: mapStyleUrl,
+
+      // Approximately Temasek Polytechnic / Tampines area
+      center: [103.933, 1.345],
+      zoom: 16
+    });
+
+    locationMap.addControl(
+      new maplibregl.NavigationControl(),
+      "top-right"
+    );
+
+    locationMap.on("click", function (event) {
+
+      selectedLongitude = event.lngLat.lng;
+      selectedLatitude = event.lngLat.lat;
+
+      // Remove the old marker if the user selects a new point.
+      if (locationMarker) {
+        locationMarker.remove();
+      }
+
+      locationMarker = new maplibregl.Marker()
+        .setLngLat([
+          selectedLongitude,
+          selectedLatitude
+        ])
+        .addTo(locationMap);
+
+      document.getElementById("mapLocationText").textContent =
+        "Selected coordinates: " +
+        selectedLatitude.toFixed(6) +
+        ", " +
+        selectedLongitude.toFixed(6);
+    });
+
+    // The Rekognition Custom Labels model was trained on exactly these
+    // five classes: electrical, staircase, water, chair and desk.
+    // Keep the user-facing issue choices mapped 1-to-1 to those classes.
+    var REPORT_ISSUE_CONFIG = {
+      "Electrical Issue": {
+        modelLabel: "electrical",
+        category: "Safety Hazards"
+      },
+      "Staircase Issue": {
+        modelLabel: "staircase",
+        category: "Safety Hazards"
+      },
+      "Water Issue": {
+        modelLabel: "water",
+        category: "Safety Hazards"
+      },
+      "Broken Chair": {
+        modelLabel: "chair",
+        category: "Maintenance Issues"
+      },
+      "Broken Table or Desk": {
+        modelLabel: "desk",
+        category: "Maintenance Issues"
+      },
+      "Other": {
+        modelLabel: null,
+        category: "Other"
+      }
+    };
+
+    var MODEL_LABEL_TO_ISSUE = {
+      electrical: "Electrical Issue",
+      staircase: "Staircase Issue",
+      water: "Water Issue",
+      chair: "Broken Chair",
+      desk: "Broken Table or Desk"
+    };
+
+    var latestVerificationResult = null;
+    var uploadedImageKey = null;
+    var uploadedImageUrl = null;
+
+    function updateIssueTypeCategoryHint() {
+      var issueType = document.getElementById("r-issue-type").value;
+      var hint = document.getElementById("issueTypeCategory");
+      var config = REPORT_ISSUE_CONFIG[issueType];
+
+      hint.textContent = config ? "Category: " + config.category : "";
+    }
+
+    // Checks every required field. If one is empty, it gets a red border
+    // and shows the error line under it (that's the .has-error class,
+    // already wired up in the CSS). Returns true only if everything is filled in.
+    function validateReportForm() {
+      var isValid = true;
+      var firstInvalidField = null;
+
+      var requiredFieldIds = ["r-title", "r-issue-type", "r-building", "r-level", "r-exact", "r-desc"];
+
+      for (var i = 0; i < requiredFieldIds.length; i++) {
+        var input = document.getElementById(requiredFieldIds[i]);
+        var fieldWrapper = input.closest(".field");
+        var isEmpty = input.value.trim() === "";
+
+        if (isEmpty) {
+          fieldWrapper.classList.add("has-error");
+          isValid = false;
+          if (!firstInvalidField) firstInvalidField = input;
+        } else {
+          fieldWrapper.classList.remove("has-error");
+        }
+      }
+
+      // Photo is required too, but it's a file input, so check it on its own.
+      var photoFile = document.getElementById("r-photo").files[0];
+      var photoFieldWrapper = document.getElementById("dropzone").closest(".field");
+
+      if (!photoFile) {
+        photoFieldWrapper.classList.add("has-error");
+        isValid = false;
+        if (!firstInvalidField) firstInvalidField = document.getElementById("dropzone");
+      } else {
+        photoFieldWrapper.classList.remove("has-error");
+      }
+
+      if (firstInvalidField) {
+        firstInvalidField.focus();
+      }
+
+      return isValid;
+    }
+
+    // Clears the red error state on a field as soon as the student starts
+    // fixing it, instead of leaving it red until they click Submit again.
+    document.getElementById("reportForm").addEventListener("input", function (event) {
+      var fieldWrapper = event.target.closest(".field");
+      if (fieldWrapper) fieldWrapper.classList.remove("has-error");
+    });
+
+    // Called by the "Confirm & submit" button on the review screen.
+    // The photo has already been uploaded to S3 during verification.
+    // This call stores the S3 image URL/path together with the report in RDS.
+    function submitReport() {
+
+      if (!uploadedImageKey || !uploadedImageUrl) {
+        showToast(
+          "Photo upload to Amazon S3 has not completed yet. Please go back and wait for the AWS image check to finish.",
+          "error"
+        );
+        return;
+      }
+
+      var title = document.getElementById("r-title").value;
+      var issueType = document.getElementById("r-issue-type").value;
+      // The broad category was never picked directly — look it up from
+      // the issue type using the same table common.js uses everywhere else.
+      var category = REPORT_ISSUE_CONFIG[issueType] ? REPORT_ISSUE_CONFIG[issueType].category : "Other";
+      var building = document.getElementById("r-building").value;
+      var level = document.getElementById("r-level").value;
+      var exactLocation = document.getElementById("r-exact").value;
+      var description = document.getElementById("r-desc").value;
+      var locationText =
+        building + ", " +
+        level + ", " +
+        exactLocation;
+
+      if (
+        selectedLatitude !== null &&
+        selectedLongitude !== null
+      ) {
+        locationText +=
+          " | Map: " +
+          selectedLatitude.toFixed(6) +
+          ", " +
+          selectedLongitude.toFixed(6);
+      }
+
+      var confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
+      var confirmSubmitLabel = document.getElementById("confirmSubmitLabel");
+      confirmSubmitBtn.disabled = true;
+      confirmSubmitLabel.textContent = "Submitting…";
+
+      // Real POST /reports -> API Gateway -> Lambda -> RDS.
+      // report.html collects what the student entered and sends it to:
+      awsApi.createReport({
+        title: title,
+        issue_type: issueType,
+        category: category,
+        building: building,
+        level: level,
+        exact_location: exactLocation,
+        location: locationText,
+        description: description,
+        status: "submitted",
+        priority: null,
+        author_id: currentUser.email,
+        author_name: currentUser.name,
+        image: uploadedImageUrl,
+        rekognition: latestVerificationResult
+      }).then(function (response) {
+        if (response.statusCode !== 201) {
+          confirmSubmitBtn.disabled = false;
+          confirmSubmitLabel.textContent = "Confirm & submit";
+          showToast("Unable to submit report", "error");
+          return;
+        }
+        // setFlashMessage stores the success text so it can still be shown
+        // AFTER we redirect — see common.js for why a normal showToast()
+        // wouldn't survive the page change.
+        setFlashMessage("Report submitted — thank you!");
+        window.location.href = "feed.html";
+      });
+    }
+
+    // Runs when the student picks a file in the hidden #r-photo input.
+    // FileReader turns the picked file into a "data URL" (the image
+    // encoded as text) so it can be shown directly in the <img> preview.
+    function previewPhoto() {
+      const file = document.getElementById("r-photo").files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        var imageBase64 = e.target.result;
+
+        // A newly selected file must be uploaded to S3 again.
+        uploadedImageKey = null;
+        uploadedImageUrl = null;
+        latestVerificationResult = null;
+
+        document.getElementById("dropzonePreviewImg").src = imageBase64;
+        document.getElementById("dropzoneEmpty").hidden = true;
+        document.getElementById("dropzonePreview").hidden = false;
+
+        // Send the ACTUAL image to AWS after FileReader finishes.
+        checkPhotoAgainstIssueType(imageBase64);
+      };
+
+      reader.readAsDataURL(file);
+    }
+    // The Rekognition process begins in report.html. 
+    // When the student selects an image, I use the browser FileReader API. 
+    // readAsDataURL() converts the selected image into a Base64 data URL. 
+    // When reading finishes, reader.onload runs and I send that image data 
+    // to my Rekognition checking function
+
+    function checkPhotoAgainstIssueType(imageBase64)//same image data, but encoded as text so it can travel inside JSON.
+    {
+      var issueType = document.getElementById("r-issue-type").value;
+      var scanResult = document.getElementById("scanResult");
+      var config = REPORT_ISSUE_CONFIG[issueType];
+      var photoFile = document.getElementById("r-photo").files[0];
+
+      latestVerificationResult = null;
+
+      if (!issueType || !config) {
+        scanResult.hidden = true;
+        return;
+      }
+
+      if (!imageBase64 && !uploadedImageKey) {
+        return;
+      }
+
+      scanResult.hidden = false;
+      scanResult.className = "scan-result scan-result--loading";
+
+      if (issueType === "Other") {
+        scanResult.innerHTML =
+          '<span class="spinner"></span> Uploading photo securely to Amazon S3…';
+      } else {
+        scanResult.innerHTML =
+          '<span class="spinner"></span> Uploading photo to Amazon S3 and analysing with AWS Rekognition…';
+      }
+
+      awsApi.analyzeImage(
+        imageBase64,
+        issueType,
+        {
+          imageKey: uploadedImageKey,
+          uploadOnly: issueType === "Other",
+          fileName: photoFile ? photoFile.name : null
+        }
+      ).then(function (response) {
+
+        if (response.statusCode !== 200) {
+          console.error("Image upload/analysis failed:", response);
+
+          scanResult.className = "scan-result scan-result--warn";
+          scanResult.innerHTML =
+            '<p class="scan-result__title">Unable to upload/analyse photo</p>' +
+            '<p class="scan-result__body">' +
+            (response.body && response.body.message
+              ? escapeHtml(response.body.message)
+              : "Please try again.") +
+            '</p>';
+
+          return;
+        }
+
+        var result = response.body || {};
+
+        uploadedImageKey =
+          result.imageKey || uploadedImageKey;
+
+        uploadedImageUrl =
+          result.imageUrl || uploadedImageUrl;
+
+        if (!uploadedImageKey || !uploadedImageUrl) {
+          scanResult.className = "scan-result scan-result--warn";
+          scanResult.innerHTML =
+            '<p class="scan-result__title">Photo storage incomplete</p>' +
+            '<p class="scan-result__body">AWS did not return the S3 image path. Please try the photo again.</p>';
+          return;
+        }
+
+        result.imageKey = uploadedImageKey;
+        result.imageUrl = uploadedImageUrl;
+
+        // "Other" is stored in S3 but intentionally skips AI classification.
+        if (issueType === "Other") {
+          result.matched = false;
+          result.manual_review = true;
+          result.predicted_issue_type = null;
+          result.predicted_category = "Other";
+
+          latestVerificationResult = result;
+
+          scanResult.className = "scan-result scan-result--match";
+          scanResult.innerHTML =
+            '<p class="scan-result__title">✓ Photo saved for manual review</p>' +
+            '<p class="scan-result__body">The photo was uploaded to Amazon S3. This issue is outside the five trained AI classes, so staff will review it manually.</p>';
+
+          return;
+        }
+
+        var detectedLabel = (result.label || "").toLowerCase();
+        var predictedIssue =
+          MODEL_LABEL_TO_ISSUE[detectedLabel] ||
+          result.label ||
+          null;
+        var predictedConfig =
+          predictedIssue
+            ? REPORT_ISSUE_CONFIG[predictedIssue]
+            : null;
+
+        var matched =
+          result.detected === true &&
+          detectedLabel === config.modelLabel;
+
+        result.matched = matched;
+        result.predicted_issue_type = predictedIssue;
+        result.predicted_category =
+          predictedConfig
+            ? predictedConfig.category
+            : null;
+
+        latestVerificationResult = result;
+
+        if (matched) {
+          scanResult.className = "scan-result scan-result--match";
+          scanResult.innerHTML =
+            '<p class="scan-result__title">✓ Looks correct (' +
+            result.confidence +
+            '% confidence)</p>' +
+            '<p class="scan-result__body">AWS Rekognition detected <strong>' +
+            escapeHtml(predictedIssue) +
+            '</strong>, which matches your selected issue type.</p>';
+
+        } else if (result.detected && predictedIssue) {
+          scanResult.className = "scan-result scan-result--warn";
+          scanResult.innerHTML =
+            '<p class="scan-result__title">Possible mismatch (' +
+            result.confidence +
+            '% confidence)</p>' +
+            '<p class="scan-result__body">AWS Rekognition detected <strong>' +
+            escapeHtml(predictedIssue) +
+            '</strong>, but you selected <strong>' +
+            escapeHtml(issueType) +
+            '</strong>. You can correct the issue type or leave it for staff review.</p>';
+
+        } else {
+          scanResult.className = "scan-result scan-result--warn";
+          scanResult.innerHTML =
+            '<p class="scan-result__title">Photo not recognised (' +
+            (result.confidence ?? 0) +
+            '% confidence)</p>' +
+            '<p class="scan-result__body">The model could not confidently classify this photo into electrical, staircase, water, chair or desk.</p>';
+        }
+      });
+    }
+
+    // If the student changes the issue type AFTER already picking a
+    // photo, re-run the check against the new issue type.
+    document.getElementById("r-issue-type").addEventListener("change", function () {
+      updateIssueTypeCategoryHint();
+
+      var photoFile = document.getElementById("r-photo").files[0];
+      var imageBase64 = document.getElementById("dropzonePreviewImg").src;
+
+      if (photoFile && imageBase64) {
+        checkPhotoAgainstIssueType(imageBase64);
+      }
+    });
+
+    // Called by the "Remove photo" button. Clears the picked file and
+    // puts the dropzone back to its empty, "click to upload" state —
+    // basically undoes everything previewPhoto() and
+    // checkPhotoAgainstIssueType() did.
+    function removePhoto() {
+      document.getElementById("r-photo").value = ""; // clears the picked file
+      document.getElementById("dropzonePreview").hidden = true;
+      document.getElementById("dropzoneEmpty").hidden = false;
+      document.getElementById("dropzonePreviewImg").src = "";
+      latestVerificationResult = null;
+      uploadedImageKey = null;
+      uploadedImageUrl = null;
+
+      var scanResult = document.getElementById("scanResult");
+      scanResult.hidden = true;
+      scanResult.innerHTML = "";
+    }
+
+    // Called by the "Submit" button at the bottom of step 1. Validates
+    // first — if anything is missing it stops here and shows the red
+    // errors. Otherwise it copies everything into the review screen and
+    // swaps from the form to the confirm screen.
+    function showConfirmScreen() {
+      // Stop here (and show the error messages) if anything required is missing.
+      if (!validateReportForm()) {
+        return;
+      }
+
+      var selectedIssueType = document.getElementById("r-issue-type").value;
+      var selectedConfig = REPORT_ISSUE_CONFIG[selectedIssueType];
+      var selectedCategory = selectedConfig ? selectedConfig.category : "Other";
+
+      document.getElementById("confirmPhoto").src = document.getElementById("dropzonePreviewImg").src;
+      document.getElementById("confirmCategory").textContent = selectedCategory;
+      document.getElementById("confirmTitle").textContent = document.getElementById("r-title").value;
+      var confirmLocationText =
+        document.getElementById("r-building").value + " · " +
+        document.getElementById("r-level").value + " · " +
+        document.getElementById("r-exact").value;
+
+      if (
+        selectedLatitude !== null &&
+        selectedLongitude !== null
+      ) {
+        confirmLocationText += " · 📍 Map location selected";
+      }
+
+      document.getElementById("confirmLocation").textContent =
+        confirmLocationText;
+      document.getElementById("confirmDescription").textContent = document.getElementById("r-desc").value;
+
+      var confirmMeta = document.getElementById("confirmMeta");
+      var aiText = "AI verification: not available";
+      if (selectedIssueType === "Other") {
+        aiText = "AI verification: skipped — manual review";
+      } else if (latestVerificationResult) {
+        if (latestVerificationResult.matched) {
+          aiText = "AI verification: matched (" + latestVerificationResult.confidence + "% confidence)";
+        } else if (latestVerificationResult.detected) {
+          aiText = "AI verification: possible mismatch (" + latestVerificationResult.confidence + "% confidence)";
+        } else {
+          aiText = "AI verification: not recognised";
+        }
+      }
+
+      confirmMeta.innerHTML =
+        "<span>Issue type: " + escapeHtml(selectedIssueType) + "</span>" +
+        "<span>" + escapeHtml(aiText) + "</span>";
+
+      document.getElementById("reportForm").hidden = true;
+      document.getElementById("reportHeadForm").hidden = true;
+      document.getElementById("reportConfirm").hidden = false;
+    }
+
+    // Called by the "Edit details" button on the review screen. It's
+    // the exact opposite of showConfirmScreen() above: hide the review
+    // screen and show the form again, with everything the student
+    // already typed still filled in (we never cleared the inputs, so
+    // there's nothing extra to do here except swap which screen is visible).
+    function editReportDetails() {
+      document.getElementById("reportConfirm").hidden = true;
+      document.getElementById("reportForm").hidden = false;
+      document.getElementById("reportHeadForm").hidden = false;
+    }
+
+
+  </script>
+</body>
+
+</html>

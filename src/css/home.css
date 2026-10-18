@@ -1,0 +1,64 @@
+/* =========================================================
+   NexSafe — home.css
+   Styles only used on the signed-in Home page (home.html):
+   the staff stats band + urgent list, and the student
+   recent-reports / notifications sections.
+   ========================================================= */
+
+.section-title--sm { font-size: 1.25rem; margin-bottom: var(--sp-5); }
+
+.home__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-5);
+  background: var(--n-900);
+  border-radius: var(--r-xl);
+  padding: var(--sp-7) var(--sp-6);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--sp-6);
+}
+.home__stats::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 0%, rgba(20, 184, 166, .18), transparent 50%),
+              radial-gradient(circle at 80% 100%, rgba(37, 99, 235, .15), transparent 50%);
+  pointer-events: none;
+}
+.home__stat { position: relative; text-align: center; }
+.home__stat-num {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: var(--sp-2);
+}
+.home__stat-label { color: var(--n-300); font-size: .92rem; }
+.home__actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-7); }
+.home__section { margin-bottom: var(--sp-7); }
+.home__section .section-title--sm { margin-bottom: var(--sp-4); }
+
+.notif-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.notif-item {
+  background: var(--n-0);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  cursor: pointer;
+  transition: border-color .2s, transform .2s;
+}
+.notif-item:hover { border-color: var(--c-primary-500); transform: translateY(-2px); }
+.notif-item__text { font-size: .92rem; color: var(--n-800); margin-bottom: 4px; }
+.notif-item__time { font-size: .8rem; color: var(--n-400); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 760px) {
+  .home__stats { gap: var(--sp-4); padding: var(--sp-6) var(--sp-4); }
+}
+
+@media (max-width: 480px) {
+  .home__stats { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,51 @@
+/* =========================================================
+   NexSafe — manage.css
+   Styles only used on the Manage Reports page (manage.html):
+   the search + status filter row, and the compact list-style
+   report rows (feedcard laid out horizontally).
+   ========================================================= */
+
+.manage__controls { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-6); }
+.manage__search {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--n-50);
+  color: var(--n-400);
+}
+.manage__search input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: .92rem;
+  color: var(--n-900);
+}
+.manage__search input:focus { outline: none; }
+.manage__filter { width: 200px; flex-shrink: 0; }
+.manage__filter select {
+  width: 100%;
+  padding: 10px 32px 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--n-50);
+  font-size: .92rem;
+  cursor: pointer;
+}
+.manage__list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.manage__list .feedcard { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: var(--sp-4); }
+.manage__list .feedcard__photo { width: 56px; height: 56px; margin: 0; border-radius: var(--r-md); }
+.manage__list .feedcard__top { grid-column: 2; margin-bottom: 4px; }
+.manage__list .feedcard__title { grid-column: 2; margin-bottom: 2px; }
+.manage__list .feedcard__loc { grid-column: 2; margin-bottom: 0; }
+.manage__list .feedcard__foot { grid-column: 3 / span 2; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .manage__list .feedcard { grid-template-columns: 1fr; }
+  .manage__list .feedcard__foot { align-items: flex-start; }
+}

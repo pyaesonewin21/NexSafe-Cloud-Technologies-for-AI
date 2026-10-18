@@ -1,0 +1,332 @@
+import base64
+import json
+import os
+import uuid
+from datetime import datetime, timezone
+from urllib.parse import quote
+
+import boto3
+
+
+AWS_REGION = os.environ.get(
+    "AWS_REGION",
+    "ap-southeast-2"
+)
+
+UPLOAD_BUCKET = os.environ.get(
+    "UPLOAD_BUCKET",
+    ""
+)
+
+REKOGNITION_MODEL_ARN = os.environ.get(
+    "REKOGNITION_MODEL_ARN",
+    ""
+)
+
+MIN_CONFIDENCE = float(
+    os.environ.get(
+        "MIN_CONFIDENCE",
+        "60"
+    )
+)
+
+PUBLIC_IMAGE_BASE_URL = os.environ.get(
+    "PUBLIC_IMAGE_BASE_URL",
+    (
+        f"https://{UPLOAD_BUCKET}.s3."
+        f"{AWS_REGION}.amazonaws.com"
+        if UPLOAD_BUCKET
+        else ""
+    )
+).rstrip("/")
+
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+s3 = boto3.client(
+    "s3",
+    region_name=AWS_REGION
+)
+
+rekognition = boto3.client(
+    "rekognition",
+    region_name=AWS_REGION
+)
+
+
+def response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+        },
+        "body": json.dumps(body)
+    }
+
+
+def parse_body(event):
+    body = event.get("body")
+
+    if body is None:
+        return {}
+
+    if isinstance(body, dict):
+        return body
+
+    return json.loads(body)
+
+
+def extension_for(content_type):
+    mapping = {
+        "image/jpeg": "jpg",
+        "image/jpg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp"
+    }
+
+    return mapping.get(
+        str(content_type).lower()
+    )
+
+
+def validate_existing_key(value):
+    if not value:
+        return None
+
+    key = str(value).strip()
+
+    if not key.startswith(
+        "uploads/reports/"
+    ):
+        raise ValueError(
+            "Invalid NexSafe uploaded image key."
+        )
+
+    return key
+
+
+def object_url(key):
+    if not PUBLIC_IMAGE_BASE_URL:
+        return None
+
+    encoded_key = "/".join(
+        quote(part, safe="")
+        for part in key.split("/")
+    )
+
+    return (
+        PUBLIC_IMAGE_BASE_URL
+        + "/"
+        + encoded_key
+    )
+
+
+def upload_base64_image(body):
+    if not UPLOAD_BUCKET:
+        raise ValueError(
+            "UPLOAD_BUCKET environment variable is missing."
+        )
+
+    image_base64 = str(
+        body.get(
+            "imageBase64",
+            ""
+        )
+    ).strip()
+
+    if not image_base64:
+        raise ValueError(
+            "imageBase64 is required."
+        )
+
+    content_type = str(
+        body.get(
+            "contentType",
+            "image/jpeg"
+        )
+    ).lower()
+
+    extension = extension_for(
+        content_type
+    )
+
+    if not extension:
+        raise ValueError(
+            "Only JPEG, PNG and WebP images are supported."
+        )
+
+    try:
+        image_bytes = base64.b64decode(
+            image_base64,
+            validate=True
+        )
+    except Exception as error:
+        raise ValueError(
+            "Invalid Base64 image."
+        ) from error
+
+    if not image_bytes:
+        raise ValueError(
+            "Uploaded image is empty."
+        )
+
+    if len(image_bytes) > MAX_IMAGE_BYTES:
+        raise ValueError(
+            "Image is too large. Maximum size is 5 MB."
+        )
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    image_key = (
+        "uploads/reports/"
+        f"{now.year}/"
+        f"{now.month:02d}/"
+        f"{uuid.uuid4()}.{extension}"
+    )
+
+    s3.put_object(
+        Bucket=UPLOAD_BUCKET,
+        Key=image_key,
+        Body=image_bytes,
+        ContentType=content_type
+    )
+
+    print(
+        "NexSafe image uploaded:",
+        f"s3://{UPLOAD_BUCKET}/{image_key}"
+    )
+
+    return image_key
+
+
+def lambda_handler(event, context):
+    try:
+        body = parse_body(event)
+
+        image_key = validate_existing_key(
+            body.get("imageKey")
+        )
+
+        if not image_key:
+            image_key = upload_base64_image(
+                body
+            )
+
+        image_url = object_url(
+            image_key
+        )
+
+        # "Other" -> store photo in S3, manual review only.
+        if body.get("uploadOnly") is True:
+            return response(
+                200,
+                {
+                    "success": True,
+                    "uploaded": True,
+                    "detected": False,
+                    "label": None,
+                    "confidence": 0,
+                    "imageKey": image_key,
+                    "imageUrl": image_url
+                }
+            )
+
+        if not REKOGNITION_MODEL_ARN:
+            raise ValueError(
+                "REKOGNITION_MODEL_ARN environment variable is missing."
+            )
+
+        result = (
+            rekognition
+            .detect_custom_labels(
+                ProjectVersionArn=(
+                    REKOGNITION_MODEL_ARN
+                ),
+                MinConfidence=(
+                    MIN_CONFIDENCE
+                ),
+                Image={
+                    "S3Object": {
+                        "Bucket": UPLOAD_BUCKET,
+                        "Name": image_key
+                    }
+                }
+            )
+        )
+
+        labels = result.get(
+            "CustomLabels",
+            []
+        )
+
+        labels.sort(
+            key=lambda item: float(
+                item.get(
+                    "Confidence",
+                    0
+                )
+            ),
+            reverse=True
+        )
+
+        best = (
+            labels[0]
+            if labels
+            else None
+        )
+
+        return response(
+            200,
+            {
+                "success": True,
+                "uploaded": True,
+                "detected": bool(best),
+                "label": (
+                    best.get("Name")
+                    if best
+                    else None
+                ),
+                "confidence": (
+                    round(
+                        float(
+                            best.get(
+                                "Confidence",
+                                0
+                            )
+                        ),
+                        2
+                    )
+                    if best
+                    else 0
+                ),
+                "imageKey": image_key,
+                "imageUrl": image_url
+            }
+        )
+
+    except json.JSONDecodeError:
+        return response(
+            400,
+            {
+                "success": False,
+                "message": (
+                    "Invalid JSON request body."
+                )
+            }
+        )
+
+    except Exception as error:
+        print(
+            "NEXSAFE ANALYZE IMAGE ERROR:",
+            repr(error)
+        )
+
+        return response(
+            500,
+            {
+                "success": False,
+                "message": str(error)
+            }
+        )

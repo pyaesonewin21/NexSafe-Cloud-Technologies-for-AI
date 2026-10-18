@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230f172a%22/><path d=%22M16 4C10 4 5 6 5 9c0 8 3 15 11 20V4z%22 fill=%22%2334d399%22/><path d=%22M16 4c6 0 11 2 11 5 0 8-3 15-11 20V4z%22 fill=%22%23059669%22/><path d=%22M16 7c-4 5-8 10-7 15 .5 5 4 8 7 8s6.5-3 7-8c1-5-3-10-7-15z%22 fill=%22%23fff%22/><path d=%22M16 10c-3 4-6 8-5 12 .5 4 3 6 5 6s4.5-2 5-6c.2-2.5-1-4-2.5-6 .3 2-.5 3.5-1.5 2.5-1-1 0-2.7 0-4 0-.8-.3-2.5-1-4.5z%22 fill=%22%232563eb%22/></svg>" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Feed — NexSafe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/feed.css" />
+</head>
+
+<body>
+  <!-- Same signed-in header as every other app page — see home.html
+         for the full explanation of each part. Only the "is-active"
+         link and the <title> change between pages. -->
+  <header class="header" id="appHeader">
+    <div class="container header__inner">
+      <a href="home.html" class="brand" aria-label="NexSafe">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+            <path d="M16 4C10 4 5 6 5 9c0 8 3 15 11 20V4z" fill="#34d399" />
+            <path d="M16 4c6 0 11 2 11 5 0 8-3 15-11 20V4z" fill="#059669" />
+            <path d="M16 7c-4 5-8 10-7 15 .5 5 4 8 7 8s6.5-3 7-8c1-5-3-10-7-15z" fill="#fff" />
+            <path
+              d="M16 10c-3 4-6 8-5 12 .5 4 3 6 5 6s4.5-2 5-6c.2-2.5-1-4-2.5-6 .3 2-.5 3.5-1.5 2.5-1-1 0-2.7 0-4 0-.8-.3-2.5-1-4.5z"
+              fill="#2563eb" />
+          </svg>
+        </span>
+        <span class="brand__name">Nex<span>Safe</span></span>
+      </a>
+
+      <nav class="appnav" id="appNav">
+        <a href="home.html" class="appnav__link">Home</a>
+        <a href="feed.html" class="appnav__link is-active">Feed</a>
+        <a href="report.html" class="appnav__link" data-role="student">Report</a>
+        <a href="myreports.html" class="appnav__link" data-role="student">My Reports</a>
+        <a href="review.html" class="appnav__link" data-role="staff">Review Queue</a>
+        <a href="manage.html" class="appnav__link" data-role="staff">Manage Reports</a>
+      </nav>
+
+      <div class="header__actions">
+        <div class="userchip-wrap">
+          <button class="userchip" id="userChip" aria-haspopup="true" aria-expanded="false">
+            <span class="userchip__avatar" id="userAvatar"></span>
+            <span class="userchip__info">
+              <span class="userchip__name" id="userName"></span>
+              <span class="userchip__role" id="userRole"></span>
+            </span>
+            <svg class="userchip__caret" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div class="profile-menu" id="profileMenu" hidden>
+            <div class="profile-menu__header">
+              <span class="profile-menu__avatar" id="profileAvatar"></span>
+              <div>
+                <p class="profile-menu__name" id="profileName"></p>
+                <p class="profile-menu__email" id="profileEmail"></p>
+              </div>
+            </div>
+            <div class="profile-menu__row">
+              <span>Role</span>
+              <span class="profile-menu__role-badge" id="profileRole"></span>
+            </div>
+            <button class="profile-menu__signout" id="signOutBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Sign out
+            </button>
+          </div>
+        </div>
+        <button class="nav-toggle" id="appNavToggle" aria-label="Toggle menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="appmain">
+    <div class="container">
+      <div class="view__head">
+        <div>
+          <h1 class="view__title">Live Feed</h1>
+          <p class="view__sub">Recent campus issues reported by the Temasek Polytechnic community.</p>
+        </div>
+        <a class="btn btn--primary btn--sm" href="report.html" data-role="student">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          New report
+        </a>
+      </div>
+
+      <!-- Category filter pills — feed.js wires up the click handlers
+             and re-filters the list; nothing here needs a form submit. -->
+      <div class="feed__controls">
+        <div class="filters" id="filters">
+          <button class="filter is-active" data-filter="all">All</button>
+          <button class="filter" data-filter="Safety Hazards">Safety Hazards</button>
+          <button class="filter" data-filter="Maintenance Issues">Maintenance Issues</button>
+          <button class="filter" data-filter="Other">Other</button>
+        </div>
+        <div class="feed__count">
+          <span class="feed__live"><span class="feed__live-dot"></span> Live</span>
+          <span id="feedCount">0 reports</span>
+        </div>
+      </div>
+
+      <!-- Empty on page load — feed.js fetches the reports and fills
+             this grid in with one card per report. -->
+      <div class="feed__grid" id="feedGrid"></div>
+      <div class="feed__empty" id="feedEmpty" hidden>
+        <div class="empty-state">
+          <p>No reports in this category yet.</p>
+        </div>
+      </div>
+      <!-- Spinner shown briefly while the (simulated) network request
+             is "in flight" — see loadFeed() in feed.js. -->
+      <div class="loading" id="feedLoading" hidden>
+        <span class="spinner"></span> Loading reports…
+      </div>
+    </div>
+  </main>
+
+  <!-- Shared: report detail modal -->
+  <div class="modal" id="reportModal" hidden>
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal__close" data-close-modal aria-label="Close">×</button>
+      <div class="modal__body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="toast__icon" id="toastIcon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+    </span>
+    <span class="toast__msg" id="toastMsg">Done!</span>
+  </div>
+
+  <!-- Back to top -->
+  <button class="totop" id="toTop" aria-label="Back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" />
+    </svg>
+  </button>
+
+  <script src="js/common.js"></script>
+  <script src="js/feed.js"></script>
+</body>
+
+</html>

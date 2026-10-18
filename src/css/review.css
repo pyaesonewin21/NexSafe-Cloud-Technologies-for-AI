@@ -1,0 +1,7 @@
+/* =========================================================
+   NexSafe — review.css
+   Styles only used on the Review Queue page (review.html).
+   Everything this page needs (report cards, empty state) is
+   already covered by css/base.css — this file is here so any
+   future Review-Queue-only styling has an obvious home.
+   ========================================================= */
